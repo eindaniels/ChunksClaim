@@ -1,0 +1,4 @@
+name: ChunksClaim
+version: '1.0'
+main: de.eindaniel.chunksClaim.ChunksClaim
+api-version: '1.21'
