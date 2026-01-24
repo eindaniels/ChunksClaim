@@ -372,6 +372,18 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     }
 
     @EventHandler
+    public void onBucketEntity(PlayerBucketEntityEvent event) {
+        Player player = event.getPlayer();
+        Chunk chunk = event.getEntity().getLocation().getChunk();
+
+        if (!canModify(player, chunk)) {
+            event.setCancelled(true);
+            player.sendMessage("§cDu kannst hier keine Fische fangen!");
+        }
+    }
+
+
+    @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
         event.blockList().removeIf(block -> {
             String chunkKey = getChunkKey(block.getChunk());
