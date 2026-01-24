@@ -48,6 +48,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         ownerTrust = storage.loadTrust();
         registerCommands();
 
+        startActionBarTask();
+
         getLogger().info("ChunkClaims aktiviert! " + claims.size() + " Claims geladen.");
     }
 
@@ -428,6 +430,19 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         }
 
         lastChunk.put(player.getUniqueId(), chunkKey);
+    }
+
+    private void startActionBarTask() {
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            for (Player player : getServer().getOnlinePlayers()) {
+                updateActionBar(player);
+            }
+        }, 0L, 20L); // Alle 1 Sekunde (20 ticks)
+    }
+
+    private void updateActionBar(Player player) {
+        Chunk chunk = player.getLocation().getChunk();
+        String chunkKey = getChunkKey(chunk);
 
         ClaimData data = claims.get(chunkKey);
         if (data == null) {
@@ -448,6 +463,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
             }
         }
     }
+
 
     // Helper Methods
     private boolean canModify(Player player, Chunk chunk) {
