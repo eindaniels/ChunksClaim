@@ -1,4 +1,4 @@
-package de.eindaniel.chunksClaim;
+package de.eindaniel.chunksClaim.config;
 
 import java.util.HashSet;
 import java.util.Set;
