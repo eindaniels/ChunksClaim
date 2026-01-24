@@ -3,6 +3,9 @@ package de.eindaniel.chunksClaim;
 import de.eindaniel.chunksClaim.commands.*;
 import de.eindaniel.chunksClaim.config.ClaimData;
 import de.eindaniel.chunksClaim.config.ClaimStorage;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.md_5.bungee.api.ChatMessageType;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
@@ -18,10 +21,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.eclipse.aether.spi.connector.Transfer;
 
@@ -32,6 +32,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     private Map<String, ClaimData> claims = new HashMap<>();
     private Map<UUID, Integer> playerClaimChunks = new HashMap<>();
     private Map<UUID, Set<UUID>> ownerTrust = new HashMap<>();
+    private Map<UUID, String> lastChunk = new HashMap<>();
     private ClaimStorage storage;
     private int defaultClaimChunks = 5;
 
@@ -45,7 +46,6 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         claims = storage.loadClaims();
         playerClaimChunks = storage.loadPlayerData();
         ownerTrust = storage.loadTrust();
-        registerAllCommands();
 
         getLogger().info("ChunkClaims aktiviert! " + claims.size() + " Claims geladen.");
     }
@@ -58,25 +58,43 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         getLogger().info("ChunkClaims deaktiviert!");
     }
 
-    public void registerAllCommands() {
-        registerCommand(new AdminClaimCommand(this));
-        registerCommand(new ClaimCommand(this));
-        registerCommand(new ClaimInfo(this));
-        registerCommand(new DeleteAllMyClaims(this));
-        registerCommand(new GiveClaimChunks(this));
-        registerCommand(new RemoveClaim(this));
-        registerCommand(new TransferClaim(this));
-        registerCommand(new Trust(this));
-        registerCommand(new TrustList(this));
-        registerCommand(new Untrust(this));
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§cNur Spieler können diesen Command nutzen!");
+            return true;
+        }
+
+        Player player = (Player) sender;
+        String cmd = command.getName().toLowerCase();
+
+        switch (cmd) {
+            case "claim":
+                return handleClaim(player, false);
+            case "adminclaim":
+                return handleAdminClaim(player);
+            case "removeclaim":
+                return handleRemoveClaim(player);
+            case "claiminfo":
+                return handleClaimInfo(player);
+            case "deleteallmyclaims":
+                return handleDeleteAllMyClaims(player);
+            case "giveclaimchunks":
+                return handleGiveClaimChunks(player, args);
+            case "transferclaim":
+                return handleTransferClaim(player, args);
+            case "trust":
+                return handleTrust(player, args);
+            case "untrust":
+                return handleUntrust(player, args);
+            case "trustlist":
+                return handleTrustList(player);
+        }
+
+        return false;
     }
 
-    public void registerCommand(Command command) {
-        CommandMap commandMap = Bukkit.getCommandMap();
-        commandMap.register("chunkclaims", command);
-    }
-
-    public boolean handleClaim(Player player, boolean admin) {
+    private boolean handleClaim(Player player, boolean admin) {
         Chunk chunk = player.getLocation().getChunk();
         String chunkKey = getChunkKey(chunk);
 
@@ -114,7 +132,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleAdminClaim(Player player) {
+    private boolean handleAdminClaim(Player player) {
         if (!player.hasPermission("chunkclaims.admin")) {
             player.sendMessage("§cKeine Berechtigung!");
             return true;
@@ -122,7 +140,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return handleClaim(player, true);
     }
 
-    public boolean handleRemoveClaim(Player player) {
+    private boolean handleRemoveClaim(Player player) {
         Chunk chunk = player.getLocation().getChunk();
         String chunkKey = getChunkKey(chunk);
 
@@ -146,7 +164,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleClaimInfo(Player player) {
+    private boolean handleClaimInfo(Player player) {
         Chunk chunk = player.getLocation().getChunk();
         String chunkKey = getChunkKey(chunk);
 
@@ -167,7 +185,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleDeleteAllMyClaims(Player player) {
+    private boolean handleDeleteAllMyClaims(Player player) {
         List<String> toRemove = new ArrayList<>();
         for (Map.Entry<String, ClaimData> entry : claims.entrySet()) {
             if (entry.getValue().getOwner().equals(player.getUniqueId())) {
@@ -190,7 +208,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleGiveClaimChunks(Player player, String[] args) {
+    private boolean handleGiveClaimChunks(Player player, String[] args) {
         if (!player.hasPermission("chunkclaims.admin")) {
             player.sendMessage("§cKeine Berechtigung!");
             return true;
@@ -221,7 +239,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleTransferClaim(Player player, String[] args) {
+    private boolean handleTransferClaim(Player player, String[] args) {
         if (args.length < 1) {
             player.sendMessage("§cVerwendung: /transferclaim <Spieler>");
             return true;
@@ -255,7 +273,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleTrust(Player player, String[] args) {
+    private boolean handleTrust(Player player, String[] args) {
         if (args.length < 1) {
             player.sendMessage("§cVerwendung: /trust <Spieler>");
             return true;
@@ -281,7 +299,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleUntrust(Player player, String[] args) {
+    private boolean handleUntrust(Player player, String[] args) {
         if (args.length < 1) {
             player.sendMessage("§cVerwendung: /untrust <Spieler>");
             return true;
@@ -306,7 +324,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         return true;
     }
 
-    public boolean handleTrustList(Player player) {
+    private boolean handleTrustList(Player player) {
         Set<UUID> trusted = ownerTrust.get(player.getUniqueId());
 
         if (trusted == null || trusted.isEmpty()) {
@@ -409,6 +427,42 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Chunk fromChunk = event.getFrom().getChunk();
+        Chunk toChunk = event.getTo().getChunk();
+
+        if (fromChunk.getX() == toChunk.getX() && fromChunk.getZ() == toChunk.getZ()) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        String chunkKey = getChunkKey(toChunk);
+        String lastChunkKey = lastChunk.get(player.getUniqueId());
+
+        if (chunkKey.equals(lastChunkKey)) {
+            return;
+        }
+
+        lastChunk.put(player.getUniqueId(), chunkKey);
+
+        ClaimData data = claims.get(chunkKey);
+        String ownerName = getServer().getOfflinePlayer(data.getOwner()).getName();
+
+        if (data.isAdminClaim()) {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<#ff2626>Admin-Claim"));
+        } else if (data.getOwner().equals(player.getUniqueId())) {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<gray>Dein Grundstück"));
+        } else {
+            Set<UUID> trusted = ownerTrust.get(data.getOwner());
+            if (trusted != null && trusted.contains(player.getUniqueId())) {
+                player.sendMessage(MiniMessage.miniMessage().deserialize("<gray>Grundstück von <#fbecab>" + ownerName + " <dark_gray>(<#47ff26><italic>Trusted</italic><dark_gray>)"));
+            } else {
+                player.sendMessage(MiniMessage.miniMessage().deserialize("<gray>Grundstück von <#fbecab>" + ownerName));
+            }
+        }
+    }
+
     // Helper Methods
     private boolean canModify(Player player, Chunk chunk) {
         String chunkKey = getChunkKey(chunk);
@@ -463,4 +517,5 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         }
         return count;
     }
+
 }
