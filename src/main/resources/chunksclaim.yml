@@ -1,0 +1,64 @@
+# Red -> <color:#ff1717>
+# "Success"-Green -> <color:#1fff17>
+# Hightlight-Color -> <color:#fbecab>
+# Gold -> <color:#FFD700>
+# Item Title -> <color:#ffc900>
+
+
+prefix: "<dark_gray>[<color:#ffcc00>ChunksClaim<dark_gray>] <reset>"
+noperm: "<#ff1717>Du hast keine Berechtigungen auf diesen Command."
+
+alreadyOwned: "<color:#ff1717>Dieser Chunk gehört bereits dir!"
+alreadyClaimed: "<color:#ff1717>Dieser Chunk ist bereits beansprucht!"
+
+noClaimChunks: "<color:#ff1717>Du hast keine ClaimChunks mehr! <gray(<color:#fbecab>{0}<dark_gray>/<color:#1fff17>{1}<gray>)"
+# {0} -> Menge der aktuellen ClaimChunks, {1} -> Maximale Menge der ClaimChunks für die Person.
+adminClaimCreated: "<color:#1fff17>AdminClaim wurde erfolgreich erstellt! <gray>(X: <color:#fbecab>{0}<gray>, Z: <color:#fbecab>{1}<gray>)"
+claimCreated: "<color:#1fff17>Claim wurde erfolgreich beansprucht! <gray>(<color:#fbecab>{0}<dark_gray>/<color:#fbecab>{1} <gray>ClaimChunks verwendet)"
+
+chunkNotClaimed: "<color:#ff1717>Dieser Chunk ist nicht beansprucht!"
+notYourChunk: "<color:#ff1717>Dieser Chunk gehört dir nicht!"
+claimRemoved: "<color:#1fff17>Claim wurde erfolgreich entfernt."
+
+claimInfoID: "<gray>ID <dark_gray>→ <color:#fbecab>{0}"
+claimInfoOwner: "<gray>Owner <dark_gray>→ <color:#fbecab>{0}"
+claimInfoAdminClaim: "<gray>AdminClaim <dark_gray>→ <color:#fbecab>{0}"
+claimInfoMin: "<gray>Min <dark_gray>→ <color:#fbecab>{0}"
+claimInfoMax: "<gray>Max <dark_gray>→ <color:#fbecab>{0}"
+
+noClaims: "<color:#ff1717>Du hast keine Claims!"
+allClaimsRemoved: "<color:#1fff17>Alle deiner Claims wurden erfolgreich gelöscht."
+
+giveClaimChunksUsage: "<gray>Richtige Verwendung <dark_gray>→ <color:#fbecab>/giveclaimchunks <Spieler> <Anzahl>"
+playerNotFound: "<color:#ff1717>Spieler wurde nicht gefunden!"
+NaN: "<color:#ff1717>Ungültige Zahl!"
+playerReceived: "<color:#1fff17>{0} hat jetzt {1} ClaimChunks!"
+youReceived: "<color:#1fff17>Du hast {0} ClaimChunks erhalten!"
+
+transferclaimUsage: "<gray>Richtige Verwendung <dark_gray>→ <color:#fbecab>/transferclaim <Spieler>"
+notYourClaim: "<color:#ff1717>Dieser Claim gehört dir nicht!"
+transferedTo: "<color:#1fff17>Claim erfolgreich an {0} übertragen!"
+transferedFrom: "<color:#1fff17>{0} hat dir einen Claim übertragen!"
+
+trustUsage: "<gray>Richtige Verwendung <dark_gray>→ <color:#fbecab>/trust <Spieler>"
+notYourself: "<color:#ff1717>Du kannst dir selbst nicht vertrauen!"
+trustTo: "<color:#ff1717>{0} wurde in allen deinen Claims vertraut!"
+trustFrom: "<color:#ff1717>{0} vetraut dir in allen seinen Claims!"
+
+untrustUsage: "<gray>Richtige Verwendung <dark_gray>→ <color:#fbecab>/untrust <Spieler>"
+notTrusted: "<color:#ff1717>Dieser Spieler ist nicht vertraut!"
+untrustSuccess: "<color:#1fff17>{0} wird nicht mehr vertraut."
+
+noTrusted: "<color:#ff1717>Keine vertrauten Spieler!"
+trustListHeader: "<gray>Alle vetrauten Spieler:"
+trustListPlayer: "<dark_gray>- <color:#fbecab>{0}"
+
+blocks.breaking: "<color:#ff1717>Du kannst hier keine Blöcke abbauen!"
+blocks.placing: "<color:#ff1717>Du kannst hier keine Blöcke platzieren!"
+interact: "<color:#ff1717>Du kannst hier nicht interagieren!"
+liquids.place: "<color:#ff1717>Du kannst hier keine Flüssigkeiten platzieren!"
+liquids.fill: "<color:#ff1717>Du kannst hier keine Flüssigkeiten aufnehmen!"
+fish: "<color:#ff1717>Du kannst hier keine Fische fangen!"
+trade: "<color:#ff1717>Du kannst hier nicht mit Dorfbewohnern handeln!"
+mount: "<color:#ff1717>Du kannst hier keine Tiere reiten!"
+friendlyAnimals: "<color:#ff1717>Du kannst hier keine friedlichen Kreaturen angreifen!"

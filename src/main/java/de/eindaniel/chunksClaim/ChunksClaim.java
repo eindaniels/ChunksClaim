@@ -39,7 +39,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        defaultClaimChunks = getConfig().getInt("default-claim-chunks", 5);
+        defaultClaimChunks = getConfig().getInt("default-claim-chunks", 50);
 
         getServer().getPluginManager().registerEvents(this, this);
         storage = new ClaimStorage(getDataFolder());
