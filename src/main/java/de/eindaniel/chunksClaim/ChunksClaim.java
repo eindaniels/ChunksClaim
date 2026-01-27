@@ -3,6 +3,8 @@ package de.eindaniel.chunksClaim;
 import de.eindaniel.chunksClaim.commands.*;
 import de.eindaniel.chunksClaim.config.ClaimData;
 import de.eindaniel.chunksClaim.config.ClaimStorage;
+import de.eindaniel.chunksClaim.i18n.MessageUtils;
+import de.eindaniel.chunksClaim.i18n.MessageUtilsSingleton;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.md_5.bungee.api.ChatMessageType;
@@ -39,6 +41,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        MessageUtilsSingleton.initialize(this);
         defaultClaimChunks = getConfig().getInt("default-claim-chunks", 50);
 
         getServer().getPluginManager().registerEvents(this, this);
@@ -80,15 +83,16 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     }
 
     public boolean handleClaim(Player player, boolean admin) {
+        MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
         Chunk chunk = player.getLocation().getChunk();
         String chunkKey = getChunkKey(chunk);
 
         if (claims.containsKey(chunkKey)) {
             ClaimData data = claims.get(chunkKey);
             if (data.getOwner().equals(player.getUniqueId())) {
-                player.sendMessage("§eDieser Chunk gehört bereits dir!");
+                messageUtils.sendLocalizedMessage(player, "alreadyOwned");
             } else {
-                player.sendMessage("§cDieser Chunk ist bereits beansprucht!");
+                messageUtils.sendLocalizedMessage(player, "alreadyClaimed");
             }
             return true;
         }
@@ -98,7 +102,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
             int used = getUsedChunks(player.getUniqueId());
 
             if (used >= available) {
-                player.sendMessage("§cDu hast keine ClaimChunks mehr! (" + used + "/" + available + ")");
+                messageUtils.sendLocalizedMessage(player, "noClaimChunks", used, available);
                 return true;
             }
         }
@@ -108,35 +112,37 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         storage.saveClaims(claims);
 
         if (admin) {
-            player.sendMessage("§aAdminClaim erfolgreich erstellt! (X: " + chunk.getX() + ", Z: " + chunk.getZ() + ")");
+            messageUtils.sendLocalizedMessage(player, "adminClaimCreated", chunk.getX(), chunk.getZ());
         } else {
             int used = getUsedChunks(player.getUniqueId());
             int available = getAvailableChunks(player.getUniqueId());
-            player.sendMessage("§aChunk erfolgreich beansprucht! (" + used + "/" + available + " ClaimChunks verwendet)");
+            messageUtils.sendLocalizedMessage(player, "claimCreated", used, available);
         }
         return true;
     }
 
     public boolean handleAdminClaim(Player player) {
+        MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
         if (!player.hasPermission("chunkclaims.admin")) {
-            player.sendMessage("§cKeine Berechtigung!");
+            messageUtils.sendLocalizedMessage(player, "noperm");
             return true;
         }
         return handleClaim(player, true);
     }
 
     public boolean handleRemoveClaim(Player player) {
+        MessageUtils messageUtils =  MessageUtilsSingleton.getInstance();
         Chunk chunk = player.getLocation().getChunk();
         String chunkKey = getChunkKey(chunk);
 
         if (!claims.containsKey(chunkKey)) {
-            player.sendMessage("§cDieser Chunk ist nicht beansprucht!");
+            messageUtils.sendLocalizedMessage(player, "chunkNotClaimed");
             return true;
         }
 
         ClaimData data = claims.get(chunkKey);
         if (!data.getOwner().equals(player.getUniqueId()) && !player.hasPermission("chunkclaims.admin")) {
-            player.sendMessage("§cDieser Chunk gehört dir nicht!");
+            messageUtils.sendLocalizedMessage(player, "notYourChunk");
             return true;
         }
 
@@ -145,32 +151,33 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
 
         int used = getUsedChunks(player.getUniqueId());
         int available = getAvailableChunks(player.getUniqueId());
-        player.sendMessage("§aClaim entfernt! (" + used + "/" + available + " ClaimChunks)");
+        messageUtils.sendLocalizedMessage(player, "claimRemoved");
         return true;
     }
 
     public boolean handleClaimInfo(Player player) {
+        MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
         Chunk chunk = player.getLocation().getChunk();
         String chunkKey = getChunkKey(chunk);
 
         if (!claims.containsKey(chunkKey)) {
-            player.sendMessage("§cDieser Chunk ist nicht beansprucht!");
+            messageUtils.sendLocalizedMessage(player, "chunkNotClaimed");
             return true;
         }
 
         ClaimData data = claims.get(chunkKey);
         String ownerName = getServer().getOfflinePlayer(data.getOwner()).getName();
 
-        player.sendMessage("§6=== Claim Info ===");
-        player.sendMessage("§eID: §f" + chunkKey);
-        player.sendMessage("§eOwner: §f" + ownerName);
-        player.sendMessage("§eAdminClaim: §f" + (data.isAdminClaim() ? "Ja" : "Nein"));
-        player.sendMessage("§eMin: §f" + (chunk.getX() * 16) + ", " + (chunk.getZ() * 16));
-        player.sendMessage("§eMax: §f" + (chunk.getX() * 16 + 15) + ", " + (chunk.getZ() * 16 + 15));
+        messageUtils.sendLocalizedMessage(player, "claimInfoID", chunkKey);
+        messageUtils.sendLocalizedMessage(player, "claimInfoOwner", ownerName);
+        messageUtils.sendLocalizedMessage(player, "claimInfoAdminClaim", (data.isAdminClaim() ? "Ja" : "Nein"));
+        messageUtils.sendLocalizedMessage(player, "claimInfoMin", (chunk.getX() * 16) + ", " + (chunk.getZ() * 16));
+        messageUtils.sendLocalizedMessage(player, "claimInfoMax", (chunk.getX() * 16 + 15) + ", " + (chunk.getZ() * 16 + 15));
         return true;
     }
 
     public boolean handleDeleteAllMyClaims(Player player) {
+        MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
         List<String> toRemove = new ArrayList<>();
         for (Map.Entry<String, ClaimData> entry : claims.entrySet()) {
             if (entry.getValue().getOwner().equals(player.getUniqueId())) {
@@ -179,7 +186,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         }
 
         if (toRemove.isEmpty()) {
-            player.sendMessage("§cDu hast keine Claims!");
+            messageUtils.sendLocalizedMessage(player, "noClaims");
             return true;
         }
 
@@ -189,24 +196,25 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         storage.saveClaims(claims);
 
         int available = getAvailableChunks(player.getUniqueId());
-        player.sendMessage("§a" + toRemove.size() + " Claims gelöscht! (" + 0 + "/" + available + " ClaimChunks)");
+        messageUtils.sendLocalizedMessage(player, "allClaimsRemoved");
         return true;
     }
 
     public boolean handleGiveClaimChunks(Player player, String[] args) {
+        MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
         if (!player.hasPermission("chunkclaims.admin")) {
-            player.sendMessage("§cKeine Berechtigung!");
+            messageUtils.sendLocalizedMessage(player, "noperm");
             return true;
         }
 
         if (args.length < 2) {
-            player.sendMessage("§cVerwendung: /giveclaimchunks <Spieler> <Anzahl>");
+            messageUtils.sendLocalizedMessage(player, "giveClaimChunksUsage");
             return true;
         }
 
         Player target = getServer().getPlayer(args[0]);
         if (target == null) {
-            player.sendMessage("§cSpieler nicht gefunden!");
+            messageUtils.sendLocalizedMessage(player, "playerNotFound");
             return true;
         }
 
@@ -216,17 +224,18 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
             playerClaimChunks.put(target.getUniqueId(), current + amount);
             storage.savePlayerData(playerClaimChunks);
 
-            player.sendMessage("§a" + target.getName() + " hat jetzt " + (current + amount) + " ClaimChunks!");
-            target.sendMessage("§aDu hast " + amount + " ClaimChunks erhalten!");
+            messageUtils.sendLocalizedMessage(player, "playerReceived", target.getName(), (current + amount));
+            messageUtils.sendLocalizedMessage(target, "youReceived", amount);
         } catch (NumberFormatException e) {
-            player.sendMessage("§cUngültige Zahl!");
+            messageUtils.sendLocalizedMessage(player, "NaN");
         }
         return true;
     }
 
     public boolean handleTransferClaim(Player player, String[] args) {
+        MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
         if (args.length < 1) {
-            player.sendMessage("§cVerwendung: /transferclaim <Spieler>");
+            messageUtils.sendLocalizedMessage(player, "transferclaimUsage");
             return true;
         }
 
@@ -234,44 +243,45 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         String chunkKey = getChunkKey(chunk);
 
         if (!claims.containsKey(chunkKey)) {
-            player.sendMessage("§cDieser Chunk ist nicht beansprucht!");
+            messageUtils.sendLocalizedMessage(player, "chunkNotClaimed");
             return true;
         }
 
         ClaimData data = claims.get(chunkKey);
         if (!data.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage("§cDieser Claim gehört dir nicht!");
+            messageUtils.sendLocalizedMessage(player, "notYourClaim");
             return true;
         }
 
         Player target = getServer().getPlayer(args[0]);
         if (target == null) {
-            player.sendMessage("§cSpieler nicht gefunden!");
+            messageUtils.sendLocalizedMessage(player, "playerNotFound");
             return true;
         }
 
         data.setOwner(target.getUniqueId());
         storage.saveClaims(claims);
 
-        player.sendMessage("§aClaim an " + target.getName() + " übertragen!");
-        target.sendMessage("§a" + player.getName() + " hat dir einen Claim übertragen!");
+        messageUtils.sendLocalizedMessage(player, "transferedTo", target.getName());
+        messageUtils.sendLocalizedMessage(target, "transferedFrom", player.getName());
         return true;
     }
 
     public boolean handleTrust(Player player, String[] args) {
+        MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
         if (args.length < 1) {
-            player.sendMessage("§cVerwendung: /trust <Spieler>");
+            messageUtils.sendLocalizedMessage(player, "trustUsage");
             return true;
         }
 
         Player target = getServer().getPlayer(args[0]);
         if (target == null) {
-            player.sendMessage("§cSpieler nicht gefunden!");
+            messageUtils.sendLocalizedMessage(player, "playerNotFound");
             return true;
         }
 
         if (target.getUniqueId().equals(player.getUniqueId())) {
-            player.sendMessage("§cDu kannst dir selbst nicht vertrauen!");
+            messageUtils.sendLocalizedMessage(player, "notYourself");
             return true;
         }
 
@@ -279,48 +289,50 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         trusted.add(target.getUniqueId());
         storage.saveTrust(ownerTrust);
 
-        player.sendMessage("§a" + target.getName() + " wurde in allen deinen Claims vertraut!");
-        target.sendMessage("§a" + player.getName() + " vertraut dir in allen Claims!");
+        messageUtils.sendLocalizedMessage(player, "trustTo", target.getName());
+        messageUtils.sendLocalizedMessage(target, "trustFrom", player.getName());
         return true;
     }
 
     public boolean handleUntrust(Player player, String[] args) {
+        MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
         if (args.length < 1) {
-            player.sendMessage("§cVerwendung: /untrust <Spieler>");
+            messageUtils.sendLocalizedMessage(player, "untrustUsage");
             return true;
         }
 
         Player target = getServer().getPlayer(args[0]);
         if (target == null) {
-            player.sendMessage("§cSpieler nicht gefunden!");
+            messageUtils.sendLocalizedMessage(player, "playerNotFound");
             return true;
         }
 
         Set<UUID> trusted = ownerTrust.get(player.getUniqueId());
         if (trusted == null || !trusted.contains(target.getUniqueId())) {
-            player.sendMessage("§cDieser Spieler ist nicht vertraut!");
+            messageUtils.sendLocalizedMessage(player, "notTrusted");
             return true;
         }
 
         trusted.remove(target.getUniqueId());
         storage.saveTrust(ownerTrust);
 
-        player.sendMessage("§c" + target.getName() + " wird nicht mehr vertraut!");
+        messageUtils.sendLocalizedMessage(player, "untrustSuccess", target.getName());
         return true;
     }
 
     public boolean handleTrustList(Player player) {
+        MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
         Set<UUID> trusted = ownerTrust.get(player.getUniqueId());
 
         if (trusted == null || trusted.isEmpty()) {
-            player.sendMessage("§eKeine vertrauten Spieler!");
+            messageUtils.sendLocalizedMessage(player, "noTrusted");
             return true;
         }
 
-        player.sendMessage("§6=== Vertraute Spieler ===");
+        messageUtils.sendLocalizedMessage(player, "trustListHeader", player.getName());
         for (UUID uuid : trusted) {
             String name = getServer().getOfflinePlayer(uuid).getName();
-            player.sendMessage("§e- §f" + name);
+            messageUtils.sendLocalizedMessage(player, "trustListPlayer", name);
         }
         return true;
     }
@@ -330,7 +342,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         if (!canModify(event.getPlayer(), event.getBlock().getChunk())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("§cDu kannst hier keine Blöcke abbauen!");
+            MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+            messageUtils.sendLocalizedMessage(event.getPlayer(), "blocks.breaking");
         }
     }
 
@@ -338,7 +351,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         if (!canModify(event.getPlayer(), event.getBlock().getChunk())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("§cDu kannst hier keine Blöcke platzieren!");
+            MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+            messageUtils.sendLocalizedMessage(event.getPlayer(), "blocks.placing");
         }
     }
 
@@ -350,7 +364,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         if (isProtectedBlock(type)) {
             if (!canModify(event.getPlayer(), event.getClickedBlock().getChunk())) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage("§cDu kannst hier nicht interagieren!");
+                MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+                messageUtils.sendLocalizedMessage(event.getPlayer(), "interact");
             }
         }
     }
@@ -359,7 +374,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     public void onBucketEmpty(PlayerBucketEmptyEvent event) {
         if (!canModify(event.getPlayer(), event.getBlock().getChunk())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("§cDu kannst hier keine Flüssigkeiten platzieren!");
+            MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+            messageUtils.sendLocalizedMessage(event.getPlayer(), "liquids.place");
         }
     }
 
@@ -367,7 +383,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     public void onBucketFill(PlayerBucketFillEvent event) {
         if (!canModify(event.getPlayer(), event.getBlock().getChunk())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("§cDu kannst hier keine Flüssigkeiten aufnehmen!");
+            MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+            messageUtils.sendLocalizedMessage(event.getPlayer(), "liquids.fill");
         }
     }
 
@@ -378,7 +395,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
 
         if (!canModify(player, chunk)) {
             event.setCancelled(true);
-            player.sendMessage("§cDu kannst hier keine Fische fangen!");
+            MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+            messageUtils.sendLocalizedMessage(player, "fish");
         }
     }
 
@@ -399,12 +417,14 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         if (event.getRightClicked() instanceof Villager) {
             if (!canModify(player, chunk)) {
                 event.setCancelled(true);
-                player.sendMessage("§cDu kannst hier nicht mit Dorfbewohnern handeln!");
+                MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+                messageUtils.sendLocalizedMessage(player, "trade");
             }
         } else if (event.getRightClicked() instanceof Animals) {
             if (!canModify(player, chunk)) {
                 event.setCancelled(true);
-                player.sendMessage("§cDu kannst hier keine Tiere reiten!");
+                MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+                messageUtils.sendLocalizedMessage(player, "mount");
             }
         }
     }
@@ -419,7 +439,8 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         if (event.getEntity() instanceof Animals) {
             if (!canModify(player, chunk)) {
                 event.setCancelled(true);
-                player.sendMessage("§cDu kannst hier keine friedlichen Kreaturen angreifen!");
+                MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+                messageUtils.sendLocalizedMessage(player, "friendlyAnimals");
             }
         }
     }
@@ -462,16 +483,17 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         }
         String ownerName = getServer().getOfflinePlayer(data.getOwner()).getName();
 
+        MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
         if (data.isAdminClaim()) {
-            player.sendActionBar(MiniMessage.miniMessage().deserialize("<#ff2626>Admin-Claim"));
+            player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.adminClaim"));
         } else if (data.getOwner().equals(player.getUniqueId())) {
-            player.sendActionBar(MiniMessage.miniMessage().deserialize("<gray>Dein Grundstück"));
+            player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.yourClaim"));
         } else {
             Set<UUID> trusted = ownerTrust.get(data.getOwner());
             if (trusted != null && trusted.contains(player.getUniqueId())) {
-                player.sendActionBar(MiniMessage.miniMessage().deserialize("<gray>Grundstück von <#fbecab>" + ownerName + " <dark_gray>(<#47ff26><italic>Trusted</italic><dark_gray>)"));
+                player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.otherClaimTrusted"));
             } else {
-                player.sendActionBar(MiniMessage.miniMessage().deserialize("<gray>Grundstück von <#fbecab>" + ownerName));
+                player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.otherClaim"));
             }
         }
     }

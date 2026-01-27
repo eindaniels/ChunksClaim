@@ -62,3 +62,8 @@ fish: "<color:#ff1717>Du kannst hier keine Fische fangen!"
 trade: "<color:#ff1717>Du kannst hier nicht mit Dorfbewohnern handeln!"
 mount: "<color:#ff1717>Du kannst hier keine Tiere reiten!"
 friendlyAnimals: "<color:#ff1717>Du kannst hier keine friedlichen Kreaturen angreifen!"
+
+actionbar.adminClaim: "<color:#ff2626>Admin-Claim"
+actionbar.yourClaim: "<gray>Dein Grundstück"
+actionbar.otherClaim: "<gray>Grundstück von <color:#fbecab>{0}"
+actionbar.otherClaimTrusted: "<gray>Grundstück von <color:#fbecab>{0} <dark_gray>(<color:#47ff26><italic>Trusted</italic><dark_gray>)"
