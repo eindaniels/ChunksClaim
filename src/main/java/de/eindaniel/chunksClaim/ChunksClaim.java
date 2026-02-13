@@ -20,7 +20,9 @@ import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.*;
@@ -395,7 +397,7 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
 
         if (!canModify(player, chunk)) {
             event.setCancelled(true);
-            MessageUtils  messageUtils = MessageUtilsSingleton.getInstance();
+            MessageUtils messageUtils = MessageUtilsSingleton.getInstance();
             messageUtils.sendLocalizedMessage(player, "fish");
         }
     }
@@ -446,6 +448,15 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
     }
 
     @EventHandler
+    public void onIgnite(BlockIgniteEvent event) {
+        if (event.getCause() != BlockIgniteEvent.IgniteCause.SPREAD) return;
+
+        if (!canModify(event.getPlayer(), event.getBlock().getChunk())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Chunk fromChunk = event.getFrom().getChunk();
         Chunk toChunk = event.getTo().getChunk();
@@ -491,9 +502,9 @@ public final class ChunksClaim extends JavaPlugin implements Listener {
         } else {
             Set<UUID> trusted = ownerTrust.get(data.getOwner());
             if (trusted != null && trusted.contains(player.getUniqueId())) {
-                player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.otherClaimTrusted"));
+                player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.otherClaimTrusted", ownerName));
             } else {
-                player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.otherClaim"));
+                player.sendActionBar(messageUtils.getLocalizedMessage(player, "actionbar.otherClaim", ownerName));
             }
         }
     }
